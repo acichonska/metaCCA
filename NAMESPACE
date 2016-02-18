@@ -1,0 +1,4 @@
+export('estimateSyy')
+export('metaCcaGp')
+export('metaCcaPlusGp')
+importFrom("stats", "cor", "pchisq")

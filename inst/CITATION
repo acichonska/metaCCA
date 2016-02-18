@@ -1,0 +1,26 @@
+citEntry(entry="article",
+         title = "metaCCA: Summary statistics-based multivariate meta-analysis
+         of genome-wide association studies using canonical correlation analysis",
+         author = c( person("Anna Cichonska"),
+                     person("Juho Rousu"),
+                     person("Pekka Marttinen"),
+                     person("Antti J Kangas"),
+                     person("Pasi Soininen"),
+                     person("Terho Lehtimaki"),
+                     person("Olli T Raitakari"),
+                     person("Marjo-Riitta Jarvelin"),
+                     person("Veikko Salomaa"),
+                     person("Mika Ala-Korpela"),
+                     person("Samuli Ripatti"),
+                     person("Matti Pirinen")),
+         year = 2016,
+         journal = "Bioinformatics",
+         volume = "btw052",
+         pages = "",
+         doi = "",
+         url = "",
+
+         textVersion =
+         paste("Cichonska et al. (2016)",
+               "metaCCA: Summary statistics-based multivariate meta-analysis of genome-wide association studies using canonical correlation analysis.",
+                "Bioinformatics, btw052 (in press)." ) )

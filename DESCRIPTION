@@ -1,0 +1,24 @@
+Package: metaCCA
+Type: Package
+Title: Summary Statistics-Based Multivariate Meta-Analysis of
+        Genome-Wide Association Studies Using Canonical Correlation
+        Analysis
+Version: 0.99.2
+Date: 2016-01-26
+Author: Anna Cichonska <anna.cichonska@helsinki.fi>
+Maintainer: Anna Cichonska <anna.cichonska@helsinki.fi>
+Suggests: knitr
+VignetteBuilder: knitr
+Description: metaCCA performs multivariate analysis of a single or
+        multiple GWAS based on univariate regression coefficients. It
+        allows multivariate representation of both phenotype and
+        genotype. metaCCA extends the statistical technique of
+        canonical correlation analysis to the setting where original
+        individual-level records are not available, and employs a
+        covariance shrinkage algorithm to achieve robustness.
+License: MIT + file LICENSE
+URL: http://biorxiv.org/content/early/2015/07/16/022665
+LazyData: TRUE
+biocViews: GenomeWideAssociation, SNP, Genetics, Regression,
+        StatisticalMethod, Software
+NeedsCompilation: no

@@ -1,0 +1,505 @@
+\documentclass[a4paper]{article}
+
+\usepackage{listings, hyperref, lmodern}
+\usepackage[left = 3.9cm, right = 3.9cm]{geometry}
+
+
+\title{\texttt{\textbf{metaCCA}}: Package for summary statistics-based multivariate meta-analysis \\
+of genome-wide association studies\\ using canonical correlation analysis}
+\author{Anna Cichonska}
+
+%\VignetteIndexEntry{metaCCA}
+%\VignetteEngine{knitr::knitr}
+
+\begin{document}
+
+\maketitle
+
+\vspace{0.5cm}
+\tableofcontents
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\vspace{1.2cm}
+\section{Introduction}
+
+A dominant approach to genome-wide association studies (GWAS) is to perform univariate
+tests between genotype-phenotype pairs. However, analysing related traits together results
+in increased statistical power and certain complex associations become detectable only when
+several variants are tested jointly. Currently, modest sample sizes of individual cohorts
+and restricted availability of individual-level genotype-phenotype data across the cohorts
+limit conducting multivariate tests. {\it metaCCA} allows to conduct multivariate analysis
+of a single or multiple GWAS based on univariate regression coefficients. It allows
+multivariate representation of both phenotype and genotype.
+
+{\it metaCCA} extends the statistical technique of canonical correlation analysis to the
+setting where the original individual-level data are not available. Instead, {\it metaCCA}
+operates on three pieces of the full data covariance matrix: $S_{XY}$ of univariate
+genotype-phenotype association results, $S_{XX}$ of genotype-genotype correlations,
+and $S_{YY}$ \linebreak of phenotype-phenotype correlations. $S_{XX}$ is estimated from
+a reference database matching the study population, e.g., the 1000 Genomes
+(\href{www.1000genomes.org}{www.1000genomes.org}), \linebreak
+and $S_{YY}$ is estimated from $S_{XY}$.
+
+This vignette explains how to use the \texttt{metaCCA} package. For more details
+about \linebreak the method, see [1].
+
+
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\vspace{0.7cm}
+\section{Input data}
+
+The package contains a simulated toy data set.
+Here, we will work with it to show \linebreak an example of the meta-analysis of two studies using {\it metaCCA}.
+We will focus \linebreak on the analysis of 10 SNPs and 10 traits (phenotypic variables). We will use univariate summary statistics
+across 1000 SNPs to estimate phenotypic correlation structures $S_{YY}$
+(here, correlations between 10 traits).
+You can have a look at the list of variables provided by typing:
+%
+<<mychunk1, cache=TRUE, eval=TRUE, hide=TRUE>>=
+library(metaCCA)
+data( package = 'metaCCA' )
+@
+%
+\vspace{-0.2cm}
+\begin{itemize}
+    \item{\texttt{\textbf{N1}} - number of individuals in study 1. }
+
+    \item{\texttt{\textbf{N2}} - number of individuals in study 2. }
+
+    \item{\texttt{\textbf{S\_XY\_full\_study1}} - univariate summary statistics of 10 traits across 1000 SNPs (study 1).}
+
+    \item{\texttt{\textbf{S\_XY\_full\_study2}} - univariate summary statistics of 10 traits across 1000 SNPs (study 2). }
+
+    \item{\texttt{\textbf{S\_XY\_study1}} - univariate summary statistics of 10 traits across 10 SNPs \linebreak (study 1). }
+
+    \item{\texttt{\textbf{S\_XY\_study2}} - univariate summary statistics of 10 traits across 10 SNPs \linebreak (study 2). }
+
+    \item{\texttt{\textbf{S\_XX\_study1}} - correlations between 10 SNPs corresponding to the population underlying study 1.}
+
+    \item{\texttt{\textbf{S\_XX\_study2}} - correlations between 10 SNPs corresponding to the population underlying study 2. }
+\end{itemize}
+
+
+\vspace{0.3cm}
+\hspace{-0.7cm}
+Tab-separated text files containing the data can be found in the \texttt{inst/extdata} folder
+(except \texttt{\textbf{N1}} and \texttt{\textbf{N2}} which are just numerical values).
+They could be read to R using \texttt{\textbf{read.table}} function with options
+\texttt{\textbf{header=TRUE}} and \texttt{\textbf{row.names=1}}.
+<<mychunkN, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Number of individuals in study 1
+print( N1 )
+
+# Number of individuals in study 2
+print( N2 )
+@
+
+
+
+\vspace{0.3cm}
+\hspace{-0.65cm}
+In {\it metaCCA}, we consider the following two types of the multivariate
+association \linebreak analysis.
+\begin{itemize}
+    \item{{\bf Single-SNP--multi-trait analysis}\\
+        One genetic variant tested for an association with a set of phenotypic variables
+        (genotypic correlation structure $S_{XX}$ not needed).}
+    \item{{\bf Multi-SNP--multi-trait analysis}\\
+        A set of genetic variants tested for an association with a set of phenotypic \linebreak variables.
+    }
+\end{itemize}
+
+
+
+
+
+
+\vspace{0.5cm}
+\subsection{Univariate summary statistics $S_{XY}$ }\label{data_xy}
+
+Data frame \texttt{\textbf{S\_XY}} with row names corresponding to SNP IDs (e.g., position or rs\_id)
+and the following columns.
+%
+\begin{itemize}
+    \item{\texttt{\textbf{allele\_0}} - allele 0 (string composed of "A", "C", "G" or "T").}
+
+    \item{\texttt{\textbf{allele\_1}} - allele 1 (string composed of "A", "C", "G" or "T").}
+
+    \item{Two columns for each trait to be included in the analysis:}
+        \begin{itemize}
+            \item{\texttt{\textbf{traitID\_b}} - univariate regression coefficients; }
+            \item{\texttt{\textbf{traitID\_se}} - corresponding standard errors;\\[0.2cm]}
+                    ("traitID" in the column name must be an ID of a trait specified
+                    by a user. \linebreak Do not use underscores "\_" in trait IDs outside
+                    "\_b"/"\_se" in order for the IDs \linebreak to be processed correctly.)
+        \end{itemize}
+\end{itemize}
+
+%\newpage
+<<mychunk2, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Part of the S_XY data frame for study 1
+
+print( head(S_XY_study1[,1:6]), digits = 3 )
+@
+
+
+
+\vspace{1cm}
+\subsection{Genotypic correlation structure $S_{XX}$ }\label{data_xx}
+
+Data frame \texttt{\textbf{S\_XX}} containing correlations between SNPs.
+It is needed only in case \linebreak of multi-SNP--multi-trait analysis.
+Row names (and, optionally, column names) must correspond to SNP IDs.
+You can estimate correlations between SNPs from a reference database matching the study population, e.g.,
+the 1000 Genomes project \linebreak
+(\href{www.1000genomes.org}{www.1000genomes.org}).
+
+<<mychunk3, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Part of the S_XX data frame for study 1
+
+print( head(S_XX_study1[,1:6]), digits = 3 )
+@
+
+
+
+
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\vspace{1cm}
+\section{metaCCA - workflow}
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\vspace{0.3cm}
+\subsection{Estimation of phenotypic correlation structure $S_{YY}$}
+
+In {\it metaCCA}, correlations between traits are estimated from univariate summary statistics $S_{XY}$.
+Specifically, each entry of the phenotypic correlation matrix $S_{YY}$ corresponds to a Pearson correlation
+between univariate regression coefficients of two phenotypic variables across genetic variants.
+The higher the number of genetic variants, the lower the error of the estimate.
+See [1] for more details.
+
+Here, we will estimate correlations between 10 traits using \texttt{\textbf{estimateSyy}} function.
+In each case, we will use summary statistics of 1000 SNPs. However,
+in practice, summary statistics of at least one chromosome should be used in order to ensure good quality of $S_{YY}$ estimate. \texttt{\textbf{estimateSyy}} can be used no matter if the univariate analysis has been performed on standardised data (meaning that the genotypes were standardised before regression coefficients and standard errors were computed)
+\linebreak or non-standardised data.
+
+The function takes one argument - \texttt{\textbf{S\_XY}} - data frame with univariate summary statistics in the form
+described in section \ref{data_xy} of this vignette.
+%
+<<mychunk4, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Estimating phenotypic correlation structure of study 1
+S_YY_study1 = estimateSyy( S_XY = S_XY_full_study1 )
+
+# Estimating phenotypic correlation structure of study 2
+S_YY_study2 = estimateSyy( S_XY = S_XY_full_study2 )
+@
+
+\newpage
+\hspace{-0.75cm}
+\texttt{\textbf{estimateSyy}} returns a matrix \texttt{\textbf{S\_YY}} containing
+correlations between traits given \linebreak as input; here, 10 traits.
+Let's display a part of the resulting matrix for study 1.
+\vspace{-0.4cm}
+<<mychunk5, cache=TRUE, eval=TRUE, hide=TRUE>>=
+print( head(S_YY_study1[,1:6]), digits = 3 )
+@
+
+
+
+
+\vspace{1.5cm}
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Genotype-phenotype association analysis}
+
+The package contains two functions for performing the association analysis:
+\begin{itemize}
+    \item{ \texttt{\textbf{metaCcaGp}} - runs the analysis according to {\it metaCCA} algorithm; }
+    \item{ \texttt{\textbf{metaCcaPlusGp}} - runs the analysis according to a variant of {\it metaCCA}, namely {\it metaCCA+}, where
+            the full covariance matrix is shrunk beyond the level guaranteeing its positive semidefinite property
+            (see [1] for more details). }
+\end{itemize}
+%
+Both functions require the same inputs, and they have the same output format. \linebreak
+They accept a varying number of inputs, depending on the
+type of the association analysis.
+Traits and SNPs included in the analysis must be the same for
+the studies that are meta-analysed together.
+
+\vspace{0.2cm}
+In the next step, we will perform a meta-analysis of two studies, where \linebreak
+we will test single SNPs for
+an association with a group of 10 traits \linebreak (single-SNP--multi-trait analysis).
+At the end, we will also analyse several SNPs \linebreak jointly
+(multi-SNP--multi-trait analysis).
+
+
+
+
+\vspace{0.8cm}
+\subsubsection{Single-SNP--multi-trait analysis}
+
+By default, \texttt{\textbf{metaCcaGp}} and \texttt{\textbf{metaCcaPlusGp}} perform single-SNP--multi-trait analysis, where
+each given SNP is analysed in turn against all given phenotypic variables. \linebreak
+The required inputs are as follows.
+%
+\begin{itemize}
+
+    \item{\texttt{\textbf{nr\_studies}} - number of studies analysed.}
+
+    \item{\texttt{\textbf{S\_XY}} - a list of data frames (one for each study) with
+    univariate summary statistics corresponding to SNPs and traits to be included in
+    the analysis (in the form described in section \ref{data_xy});}
+
+    \item{\texttt{\textbf{std\_info}} - a vector with indicators (one for each study) if the univariate analysis
+    has been performed on standardised (\texttt{\textbf{1}}) or non-standardised
+    (\texttt{\textbf{0}}) data (most likely the data were not standardised - the genotypes
+    were not standardised before univariate regression coefficients and standard errors were
+    computed - option \texttt{\textbf{0}} should be used);}
+
+    \item{\texttt{\textbf{S\_YY}} - a list of matrices (one for each study), estimated using
+    \texttt{\textbf{estimateSyy}} function, containing correlations between traits to be
+    included in the analysis;}
+
+    \item{\texttt{\textbf{N}} - a vector with numbers of individuals in each study.}
+
+\end{itemize}
+
+
+\vspace{0.5cm}
+\hspace{-0.7cm}
+We will first run the default single-SNP--multi-trait analysis of two studies using
+provided toy data.
+Each of 10 SNPs will be tested for an association with the group \linebreak of 10 traits.
+
+<<mychunk6, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Default single-SNP--multi-trait meta-analysis of 2 studies
+
+# Association analysis according to metaCCA algorithm
+metaCCA_res1 = metaCcaGp( nr_studies = 2,
+                          S_XY = list( S_XY_study1, S_XY_study2 ),
+                          std_info = c( 0, 0 ),
+                          S_YY = list( S_YY_study1, S_YY_study2 ),
+                          N = c( N1, N2) )
+
+# Association analysis according to metaCCA+ algorithm
+metaCCApl_res1 = metaCcaPlusGp( nr_studies = 2,
+                                S_XY = list( S_XY_study1, S_XY_study2 ),
+                                std_info = c( 0, 0 ),
+                                S_YY = list( S_YY_study1, S_YY_study2 ),
+                                N = c( N1, N2 ) )
+@
+
+
+
+
+\vspace{0.9cm}
+\hspace{-0.65cm}
+The output is a data frame with row names corresponding to SNP IDs.
+There are two columns containing the following information for each analysed SNP:
+\begin{itemize}
+    \item{\texttt{\textbf{r\_1}} - leading canonical correlation value, }
+    \item{\texttt{\textbf{-log10(p-val)}} - p-value in the -log10 scale. }
+\end{itemize}
+
+\newpage
+<<mychunk7, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Result of metaCCA
+print( metaCCA_res1, digits = 3 )
+@
+
+<<mychunk72, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Result of metaCCA+
+print( metaCCApl_res1, digits = 3 )
+@
+
+
+\vspace{1.5cm}
+\hspace{-0.65cm}
+If you wish, you can also run the association analysis of only one selected SNP.
+In such case, two additional inputs need to be given:
+\begin{itemize}
+    \item{\texttt{\textbf{analysis\_type}} - indicator of the analysis type: \texttt{\textbf{1}};}
+    \item{\texttt{\textbf{SNP\_id}} - ID of the SNP of interest.}
+\end{itemize}
+
+\vspace{0.5cm}
+\hspace{-0.65cm}
+Let's run the analysis for a SNP with ID 'rs80';
+it will be tested for an association with the group of 10 provided traits.
+\newpage
+<<mychunk8, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Single-SNP--multi-trait meta-analysis of 2 studies
+# and one selected SNP
+
+# metaCCA
+metaCCA_res2 = metaCcaGp( nr_studies = 2,
+                          S_XY = list( S_XY_study1, S_XY_study2 ),
+                          std_info = c( 0, 0 ),
+                          S_YY = list( S_YY_study1, S_YY_study2 ),
+                          N = c( N1, N2 ),
+                          analysis_type = 1,
+                          SNP_id = 'rs80' )
+
+# Result of metaCCA
+print( metaCCA_res2, digits = 3 )
+@
+
+<<mychunk9, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# metaCCA+
+metaCCApl_res2 = metaCcaPlusGp( nr_studies = 2,
+                                S_XY = list( S_XY_study1, S_XY_study2 ),
+                                std_info = c( 0, 0 ),
+                                S_YY = list( S_YY_study1, S_YY_study2 ),
+                                N = c( N1, N2 ),
+                                analysis_type = 1,
+                                SNP_id = 'rs80' )
+
+# Result of metaCCA+
+print( metaCCApl_res2, digits = 3 )
+@
+
+
+
+
+\newpage
+\subsubsection{Multi-SNP--multi-trait analysis}
+
+In order to analyse multiple SNPs jointly, you need to provide the following additional inputs:
+\begin{itemize}
+    \item{\texttt{\textbf{analysis\_type}} - indicator of the analysis type: \texttt{\textbf{2}};}
+    \item{\texttt{\textbf{SNP\_id}} - a vector with IDs of SNPs to be analysed jointly;}
+    \item{\texttt{\textbf{S\_XX}} - a list of data frames (one for each study) containing
+    correlations between SNPs to be analysed (in the form described in section \ref{data_xx}).}
+\end{itemize}
+
+
+\vspace{0.3cm}
+\hspace{-0.75cm}
+Here, we will run the analysis of 5 SNPs
+with IDs 'rs10', 'rs80', 'rs140', rs170' \linebreak and 'rs172'.
+They will be tested jointly for an association with the group of 10 traits.
+
+<<mychunk11, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# Multi-SNP--multi-trait meta-analysis of 2 studies
+
+# metaCCA
+metaCCA_res3 = metaCcaGp( nr_studies = 2,
+                          S_XY = list( S_XY_study1, S_XY_study2 ),
+                          std_info = c( 0, 0 ),
+                          S_YY = list( S_YY_study1, S_YY_study2 ),
+                          N = c( N1, N2 ),
+                          analysis_type = 2,
+                          SNP_id = c( 'rs10', 'rs80', 'rs140',
+                                      'rs170', 'rs172' ),
+                          S_XX = list( S_XX_study1, S_XX_study2 ) )
+
+# Result of metaCCA
+print( metaCCA_res3, digits = 3 )
+@
+
+<<mychunk12, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# metaCCA+
+metaCCApl_res3 = metaCcaPlusGp( nr_studies = 2,
+                                S_XY = list( S_XY_study1, S_XY_study2 ),
+                                std_info = c( 0, 0 ),
+                                S_YY = list( S_YY_study1, S_YY_study2 ),
+                                N = c( N1, N2 ),
+                                analysis_type = 2,
+                                SNP_id = c( 'rs10', 'rs80', 'rs140',
+                                            'rs170', 'rs172' ),
+                                S_XX = list( S_XX_study1, S_XX_study2 ))
+
+# Result of metaCCA+
+print( metaCCApl_res3, digits = 3 )
+@
+
+
+
+\vspace{1.1cm}
+\hspace{-0.65cm}
+If all studies included in the meta-analysis have the same underlying population
+\linebreak (e.g., Finnish),
+only one genotypic correlation structure is needed.
+Let's assume that this is the case for two studies in our example.
+<<mychunk13, cache=TRUE, eval=TRUE, hide=TRUE>>=
+S_XX_common = S_XX_study1
+@
+\vspace{0.2cm}
+\hspace{-0.7cm}
+Then, association analysis according to {\it metaCCA} and {\it metaCCA+}
+would be run \linebreak as follows.
+<<mychunk14, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# metaCCA
+metaCCA_res4 = metaCcaGp( nr_studies = 2,
+                          S_XY = list( S_XY_study1, S_XY_study2 ),
+                          std_info = c( 0, 0 ),
+                          S_YY = list( S_YY_study1, S_YY_study2 ),
+                          N = c( N1, N2 ),
+                          analysis_type = 2,
+                          SNP_id = c( 'rs10', 'rs80', 'rs140',
+                                      'rs170', 'rs172' ),
+                          S_XX = list( S_XX_common, S_XX_common ) )
+
+# Result of metaCCA
+print( metaCCA_res4, digits = 3 )
+@
+
+<<mychunk15, cache=TRUE, eval=TRUE, hide=TRUE>>=
+# metaCCA+
+metaCCApl_res4 = metaCcaPlusGp( nr_studies = 2,
+                                S_XY = list( S_XY_study1, S_XY_study2 ),
+                                std_info = c( 0, 0 ),
+                                S_YY = list( S_YY_study1, S_YY_study2 ),
+                                N = c( N1, N2 ),
+                                analysis_type = 2,
+                                SNP_id = c( 'rs10', 'rs80', 'rs140',
+                                            'rs170', 'rs172' ),
+                                S_XX = list( S_XX_common, S_XX_common ))
+
+# Result of metaCCA+
+print( metaCCApl_res4, digits = 3 )
+@
+
+
+
+
+
+
+\vspace{2cm}
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section{Summary}
+
+In this vignette, we have followed the procedure for association testing
+between \linebreak multivariate genotype and multivariate phenotype
+based on univariate summary \linebreak statistics using
+{\it metaCCA} algorithm and its variant {\it metaCCA+}.
+We used a simulated data set to demonstrate an example of meta-analysis
+of two genome-wide association studies.
+
+\vspace{0.2cm}
+\hspace{-0.7cm}
+For more information on the method, see [1].
+
+
+
+
+\vspace{1.5cm}
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\begin{thebibliography}{}
+
+\bibitem{paper} A Cichonska, J Rousu, P Marttinen, AJ Kangas, P Soininen, T Lehtim\"aki,\linebreak
+OT Raitakari, MR J\"arvelin, V Salomaa, M Ala-Korpela, S Ripatti, M Pirinen (2016)
+metaCCA: Summary statistics-based multivariate meta-analysis of genome-wide\linebreak association
+studies using canonical correlation analysis. {\it Bioinformatics}, btw052 \linebreak
+(in press, to be updated).
+
+\end{thebibliography}
+
+
+
+\end{document}
