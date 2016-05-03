@@ -3,7 +3,7 @@ Type: Package
 Title: Summary Statistics-Based Multivariate Meta-Analysis of
         Genome-Wide Association Studies Using Canonical Correlation
         Analysis
-Version: 0.99.2
+Version: 1.0.0
 Date: 2016-01-26
 Author: Anna Cichonska <anna.cichonska@helsinki.fi>
 Maintainer: Anna Cichonska <anna.cichonska@helsinki.fi>
