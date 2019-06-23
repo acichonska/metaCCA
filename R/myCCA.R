@@ -66,5 +66,5 @@ myCCA <- function(C_XX, C_YY, C_XY, N) {
     p_val = 	pchisq(chi, df, lower.tail = FALSE)
 
 
-    return( list(r, p_val) )
+    return( list(r, p_val, a[, 1], b[, 1]) )
 }

@@ -126,11 +126,15 @@ metaCcaPlusGp( nr_studies, S_XY, std_info, S_YY, N, analysis_type, SNP_id, S_XX 
 
     Data frame with row names corresponding to SNP IDs.
 
-    Two columns contain:
+    Columns contain:
 
     1) \code{r_1} - leading canonical correlation value,
 
-    2) \code{-log10(p-val)} - p-value in the -log10 scale.
+    2) \code{-log10(p-val)} - p-value in the -log10 scale,
+        
+    3) \code{trait_weights} - trait-wise canonical weights, 
+    
+    4) \code{snp_weights} - SNP-wise canonical weights (only for multi-SNP-–multi-trait analysis).
     }
 }
 
@@ -139,7 +143,7 @@ metaCcaPlusGp( nr_studies, S_XY, std_info, S_YY, N, analysis_type, SNP_id, S_XX 
 \references{
 Cichonska et al. (2016) metaCCA: Summary statistics-based multivariate
 meta-analysis of genome-wide association studies using canonical
-correlation analysis. Bioinformatics, btw052 (in press, to be updated).
+correlation analysis. Bioinformatics, 32(13):1981-1989.
 }
 
 \author{

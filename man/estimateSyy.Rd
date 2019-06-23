@@ -47,7 +47,7 @@ estimateSyy( S_XY )
 \references{
 Cichonska et al. (2016) metaCCA: Summary statistics-based multivariate
 meta-analysis of genome-wide association studies using canonical
-correlation analysis. Bioinformatics, btw052 (in press, to be updated).
+correlation analysis. Bioinformatics, 32(13):1981-1989.
 }
 
 \author{

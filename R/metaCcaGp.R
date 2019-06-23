@@ -193,6 +193,7 @@ metaCcaGp <- function(nr_studies, S_XY, std_info, S_YY, N, analysis_type, SNP_id
 
         r_1		=  vector( length = dim(C_XY)[1] )
         p_val	=  vector( length = dim(C_XY)[1] )
+        trait_weights_list =  list()
         # Analysing one SNP at a time (against all given traits)
         for ( i_snp in 1:dim(C_XY)[1] ){
 
@@ -220,15 +221,18 @@ metaCcaGp <- function(nr_studies, S_XY, std_info, S_YY, N, analysis_type, SNP_id
             out_list_cca		=  myCCA(C_XX_out, C_YY_out, C_XY_out, N_tot)
             r_1[i_snp]			=  out_list_cca[[1]]
             p_val[i_snp]		=  -log10(out_list_cca[[2]])
-
+            trait_weights_list[[i_snp]]  =  out_list_cca[[4]]
+            
         }
-
 
         # Data.frame with the results
         result  			 =  data.frame( r_1, p_val, row.names = SNPid[[1]] )
         colnames(result)[2]  =  '-log10(p-val)'
-
-
+        # Add trait-wise canonical weights
+        result$trait_weights  =  vector( mode = "list", length = nrow(result) ) 
+        for(i in 1:nrow(result)){
+          result$trait_weights[[i]]  =  trait_weights_list[[i]]
+        }
 
 
 
@@ -326,7 +330,7 @@ metaCcaGp <- function(nr_studies, S_XY, std_info, S_YY, N, analysis_type, SNP_id
 
 
         # Ensuring the PSD property of the full covariance matrix
-        if ( plus_mode == 0){
+        if ( plus_mode == 0 ){
             out_list_m 			=  shrinkPSD(full_cov, 1)
         } else
             out_list_m			=  shrinkPlus(full_cov, 1)
@@ -345,7 +349,8 @@ metaCcaGp <- function(nr_studies, S_XY, std_info, S_YY, N, analysis_type, SNP_id
         # Data.frame with the results
         result  		 =  data.frame( r_1, p_val, row.names = selected_SNPid )
         colnames(result)[2]  =  '-log10(p-val)'
-
+        # Add trait-wise canonical weights
+        result$trait_weights[[1]]  =  out_list_cca[[4]]
 
 
 
@@ -502,6 +507,10 @@ metaCcaGp <- function(nr_studies, S_XY, std_info, S_YY, N, analysis_type, SNP_id
         # Data.frame with the results
         result 	=  data.frame( r_1, p_val, row.names = list(selected_SNPid) )
         colnames(result)[2]  =  '-log10(p-val)'
+        # Add trait-wise canonical weights
+        result$trait_weights[[1]]  =  out_list_cca[[4]]
+        # Add SNP-wise canonical weights
+        result$snp_weights[[1]]  =  out_list_cca[[3]]
 
     }
 

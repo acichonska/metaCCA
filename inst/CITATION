@@ -15,12 +15,12 @@ citEntry(entry="article",
                      person("Matti Pirinen")),
          year = 2016,
          journal = "Bioinformatics",
-         volume = "btw052",
-         pages = "",
-         doi = "",
-         url = "",
+         volume = "32",
+         pages = "1981-1989",
+         doi = "10.1093/bioinformatics/btw052",
+         url = "https://doi.org/10.1093/bioinformatics/btw052",
 
          textVersion =
          paste("Cichonska et al. (2016)",
                "metaCCA: Summary statistics-based multivariate meta-analysis of genome-wide association studies using canonical correlation analysis.",
-                "Bioinformatics, btw052 (in press)." ) )
+                "Bioinformatics, 32(13):1981-1989." ) )
