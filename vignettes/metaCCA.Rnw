@@ -1,7 +1,7 @@
 \documentclass[a4paper]{article}
 
 \usepackage{listings, hyperref, lmodern}
-\usepackage[left = 3.9cm, right = 3.9cm]{geometry}
+\usepackage[left = 3.7cm, right = 3.7cm]{geometry}
 
 
 \title{\texttt{\textbf{metaCCA}}: Package for summary statistics-based multivariate meta-analysis \\
@@ -12,6 +12,7 @@ of genome-wide association studies\\ using canonical correlation analysis}
 %\VignetteEngine{knitr::knitr}
 
 \begin{document}
+%\SweaveOpts{concordance=TRUE}
 
 \maketitle
 
@@ -38,8 +39,8 @@ operates on three pieces of the full data covariance matrix: $S_{XY}$ of univari
 genotype-phenotype association results, $S_{XX}$ of genotype-genotype correlations,
 and $S_{YY}$ \linebreak of phenotype-phenotype correlations. $S_{XX}$ is estimated from
 a reference database matching the study population, e.g., the 1000 Genomes
-(\href{www.1000genomes.org}{www.1000genomes.org}), \linebreak
-and $S_{YY}$ is estimated from $S_{XY}$.
+(\href{www.1000genomes.org}{www.1000genomes.org}), 
+and $S_{YY}$ \linebreak is estimated from $S_{XY}$.
 
 This vignette explains how to use the \texttt{metaCCA} package. For more details
 about \linebreak the method, see [1].
@@ -183,10 +184,10 @@ between univariate regression coefficients of two phenotypic variables across ge
 The higher the number of genetic variants, the lower the error of the estimate.
 See [1] for more details.
 
-Here, we will estimate correlations between 10 traits using \texttt{\textbf{estimateSyy}} function.
+Here, we will estimate correlations between 10 traits using \texttt{\textbf{estimateSyy}} function. \linebreak
 In each case, we will use summary statistics of 1000 SNPs. However,
-in practice, summary statistics of at least one chromosome should be used in order to ensure good quality of $S_{YY}$ estimate. \texttt{\textbf{estimateSyy}} can be used no matter if the univariate analysis has been performed on standardised data (meaning that the genotypes were standardised before regression coefficients and standard errors were computed)
-\linebreak or non-standardised data.
+in practice, summary statistics of at least one chromosome should be used in order to ensure good quality \linebreak
+of $S_{YY}$ estimate. \texttt{\textbf{estimateSyy}} can be used no matter if the univariate analysis has been performed on standardised data (meaning that the genotypes were standardised before regression coefficients and standard errors were computed) or non-standardised data.
 
 The function takes one argument - \texttt{\textbf{S\_XY}} - data frame with univariate summary statistics in the form
 described in section \ref{data_xy} of this vignette.
@@ -200,11 +201,9 @@ S_YY_study2 = estimateSyy( S_XY = S_XY_full_study2 )
 @
 
 \newpage
-\hspace{-0.75cm}
 \texttt{\textbf{estimateSyy}} returns a matrix \texttt{\textbf{S\_YY}} containing
 correlations between traits given \linebreak as input; here, 10 traits.
 Let's display a part of the resulting matrix for study 1.
-\vspace{-0.4cm}
 <<mychunk5, cache=TRUE, eval=TRUE, hide=TRUE>>=
 print( head(S_YY_study1[,1:6]), digits = 3 )
 @
@@ -300,27 +299,31 @@ metaCCApl_res1 = metaCcaPlusGp( nr_studies = 2,
 \vspace{0.9cm}
 \hspace{-0.65cm}
 The output is a data frame with row names corresponding to SNP IDs.
-There are two columns containing the following information for each analysed SNP:
+The columns contain the following information for each analysed SNP:
 \begin{itemize}
     \item{\texttt{\textbf{r\_1}} - leading canonical correlation value, }
-    \item{\texttt{\textbf{-log10(p-val)}} - p-value in the -log10 scale. }
+    \item{\texttt{\textbf{-log10(p-val)}} - p-value in the -log10 scale, }
+    \item{\texttt{\textbf{trait\_weights}} - trait-wise canonical weights, }
+    \item{\texttt{\textbf{snp\_weights}} - SNP-wise canonical weights (only for multi-SNP--multi-trait analysis). }
 \end{itemize}
 
 \newpage
 <<mychunk7, cache=TRUE, eval=TRUE, hide=TRUE>>=
 # Result of metaCCA
-print( metaCCA_res1, digits = 3 )
+print( metaCCA_res1[1:2], digits = 2 )
+print( metaCCA_res1[3], digits = 1 )
 @
 
 <<mychunk72, cache=TRUE, eval=TRUE, hide=TRUE>>=
 # Result of metaCCA+
-print( metaCCApl_res1, digits = 3 )
+print( metaCCApl_res1[1:2], digits = 2 )
+print( metaCCApl_res1[3], digits = 1 )
 @
 
 
-\vspace{1.5cm}
+\vspace{2cm}
 \hspace{-0.65cm}
-If you wish, you can also run the association analysis of only one selected SNP.
+You can also run the association analysis of only one selected SNP.
 In such case, two additional inputs need to be given:
 \begin{itemize}
     \item{\texttt{\textbf{analysis\_type}} - indicator of the analysis type: \texttt{\textbf{1}};}
@@ -331,7 +334,7 @@ In such case, two additional inputs need to be given:
 \hspace{-0.65cm}
 Let's run the analysis for a SNP with ID 'rs80';
 it will be tested for an association with the group of 10 provided traits.
-\newpage
+%\newpage
 <<mychunk8, cache=TRUE, eval=TRUE, hide=TRUE>>=
 # Single-SNP--multi-trait meta-analysis of 2 studies
 # and one selected SNP
@@ -346,9 +349,9 @@ metaCCA_res2 = metaCcaGp( nr_studies = 2,
                           SNP_id = 'rs80' )
 
 # Result of metaCCA
-print( metaCCA_res2, digits = 3 )
+print( metaCCA_res2, digits = 2 )
 @
-
+\newpage
 <<mychunk9, cache=TRUE, eval=TRUE, hide=TRUE>>=
 # metaCCA+
 metaCCApl_res2 = metaCcaPlusGp( nr_studies = 2,
@@ -360,13 +363,12 @@ metaCCApl_res2 = metaCcaPlusGp( nr_studies = 2,
                                 SNP_id = 'rs80' )
 
 # Result of metaCCA+
-print( metaCCApl_res2, digits = 3 )
+print( metaCCApl_res2, digits = 2 )
 @
 
 
 
-
-\newpage
+\vspace{2cm}
 \subsubsection{Multi-SNP--multi-trait analysis}
 
 In order to analyse multiple SNPs jointly, you need to provide the following additional inputs:
@@ -399,7 +401,9 @@ metaCCA_res3 = metaCcaGp( nr_studies = 2,
                           S_XX = list( S_XX_study1, S_XX_study2 ) )
 
 # Result of metaCCA
-print( metaCCA_res3, digits = 3 )
+print( metaCCA_res3[1:2], digits = 2 )
+print( metaCCA_res3[3], digits = 2, row.names = FALSE )
+print( metaCCA_res3[4], digits = 2, row.names = FALSE )
 @
 
 <<mychunk12, cache=TRUE, eval=TRUE, hide=TRUE>>=
@@ -415,13 +419,14 @@ metaCCApl_res3 = metaCcaPlusGp( nr_studies = 2,
                                 S_XX = list( S_XX_study1, S_XX_study2 ))
 
 # Result of metaCCA+
-print( metaCCApl_res3, digits = 3 )
+print( metaCCApl_res3[1:2], digits = 2 )
+print( metaCCApl_res3[3], digits = 1, row.names = FALSE )
+print( metaCCApl_res3[4], digits = 1, row.names = FALSE )
 @
 
 
 
-\vspace{1.1cm}
-\hspace{-0.65cm}
+\newpage
 If all studies included in the meta-analysis have the same underlying population
 \linebreak (e.g., Finnish),
 only one genotypic correlation structure is needed.
@@ -430,7 +435,7 @@ Let's assume that this is the case for two studies in our example.
 S_XX_common = S_XX_study1
 @
 \vspace{0.2cm}
-\hspace{-0.7cm}
+\hspace{-0.74cm}
 Then, association analysis according to {\it metaCCA} and {\it metaCCA+}
 would be run \linebreak as follows.
 <<mychunk14, cache=TRUE, eval=TRUE, hide=TRUE>>=
@@ -446,7 +451,9 @@ metaCCA_res4 = metaCcaGp( nr_studies = 2,
                           S_XX = list( S_XX_common, S_XX_common ) )
 
 # Result of metaCCA
-print( metaCCA_res4, digits = 3 )
+print( metaCCA_res4[1:2], digits = 2 )
+print( metaCCA_res4[3], digits = 2, row.names = FALSE )
+print( metaCCA_res4[4], digits = 2, row.names = FALSE )
 @
 
 <<mychunk15, cache=TRUE, eval=TRUE, hide=TRUE>>=
@@ -462,7 +469,9 @@ metaCCApl_res4 = metaCcaPlusGp( nr_studies = 2,
                                 S_XX = list( S_XX_common, S_XX_common ))
 
 # Result of metaCCA+
-print( metaCCApl_res4, digits = 3 )
+print( metaCCApl_res4[1:2], digits = 2 )
+print( metaCCApl_res4[3], digits = 1, row.names = FALSE )
+print( metaCCApl_res4[4], digits = 1, row.names = FALSE )
 @
 
 
@@ -495,8 +504,7 @@ For more information on the method, see [1].
 \bibitem{paper} A Cichonska, J Rousu, P Marttinen, AJ Kangas, P Soininen, T Lehtim\"aki,\linebreak
 OT Raitakari, MR J\"arvelin, V Salomaa, M Ala-Korpela, S Ripatti, M Pirinen (2016)
 metaCCA: Summary statistics-based multivariate meta-analysis of genome-wide\linebreak association
-studies using canonical correlation analysis. {\it Bioinformatics}, btw052 \linebreak
-(in press, to be updated).
+studies using canonical correlation analysis. {\it Bioinformatics}, 32(13):1981-1989.
 
 \end{thebibliography}
 
